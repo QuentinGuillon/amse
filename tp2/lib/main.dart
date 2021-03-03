@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:collection/collection.dart';
 
 class Todo {
   final String title;
@@ -17,7 +18,8 @@ void main() {
     "Exercice 4",
     "Exercice 5",
     "Exercice 6a",
-    "Exercice 6b"
+    "Exercice 6b",
+    "Exercice 7"
   ];
   var descriptions = [
     "Afficher une image",
@@ -25,7 +27,8 @@ void main() {
     "Affichage d'un morceau de l'image (tuile)",
     "Transformation de l'image en grille de tuiles",
     "Inversement de 2 tiles",
-    "Déplacement de tiles dans une grille"
+    "Déplacement de tiles dans une grille",
+    "Taquin final fonctionnel"
   ];
   var exercices = [
     Exercice1(),
@@ -33,13 +36,14 @@ void main() {
     Exercice4(),
     Exercice5(),
     Exercice6a(),
-    Exercice6b()
+    Exercice6b(),
+    Exercice7()
   ];
   runApp(MaterialApp(
     title: 'TP2',
     home: TodosScreen(
       todos: List.generate(
-        6,
+        7,
         (i) => Todo(titres[i], descriptions[i], exercices[i]),
       ),
     ),
@@ -478,12 +482,12 @@ class _Exercice6b extends State<Exercice6b> {
     return InkWell(
       child: tuile,
       onTap: () {
-        swapTile(index);
+        moveTile(index);
       },
     );
   }
 
-  swapTile(int index) {
+  moveTile(int index) {
     print("${index}");
     if (indexEmpty == index + size.toInt()) {
       setState(() {
@@ -568,20 +572,241 @@ class EmptySpace {
   }
 }
 
-class Exercice7 extends StatelessWidget {
-  Exercice7({Key key}) : super(key: key);
+class Exercice7 extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _Exercice7();
+}
+
+class _Exercice7 extends State<Exercice7> {
+  double size = 3;
+  List<NewTile> tiles;
+  List<NewTile> tilesInit;
+  int indexEmpty = 6;
+  List<int> moves = [];
+  bool finish = false;
+  String picture = "https://picsum.photos/512";
+  @override
+  void initState() {
+    super.initState();
+    tiles = initTiles();
+    tilesInit = initTiles();
+  }
+
+  List<NewTile> initTiles() {
+    return (List.generate(size.toInt() * size.toInt(),
+        (index) => new NewTile(imageURL: picture, index: index)));
+  }
+
+  List<Widget> getTileWidgets(List<NewTile> inittiles) {
+    List<Widget> tiles = [];
+    EmptySpace emptySpace = EmptySpace(index: indexEmpty);
+    for (var i = 0; i < math.pow(size.toInt(), 2); i++) {
+      if (i == indexEmpty) {
+        if (!finish) {
+          tiles.add(emptySpace.newCroppedImageTile(size.toInt()));
+        } else {
+          tiles.add(newCreateTileWidgetFrom(inittiles[i], i, size.toInt()));
+        }
+      } else {
+        tiles.add(newCreateTileWidgetFrom(inittiles[i], i, size.toInt()));
+      }
+    }
+    return tiles;
+  }
+
+  List<NewTile> shakeTiles(List<NewTile> inittiles) {
+    tiles = [];
+    int n = inittiles.length;
+    for (var i = 0; i < n; i++) {
+      setState(() {
+        tiles.add(inittiles.removeAt(random.nextInt(n - i)));
+      });
+    }
+    return tiles;
+  }
+
+  void tileMovement(int move) {
+    if (move == 1) {
+      int index = indexEmpty - size.toInt();
+      setState(() {
+        tiles.insert(index, tiles.removeAt(indexEmpty));
+        tiles.insert(indexEmpty, tiles.removeAt(index + 1));
+        indexEmpty = index;
+      });
+    }
+    if ((move == -1) || (move == 0)) {
+      int index = indexEmpty + size.toInt();
+      setState(() {
+        tiles.insert(indexEmpty, tiles.removeAt(index));
+        tiles.insert(index, tiles.removeAt(indexEmpty + 1));
+        indexEmpty = index;
+      });
+    }
+    if (move == 2) {
+      int index = indexEmpty + 1;
+      setState(() {
+        tiles.insert(indexEmpty, tiles.removeAt(index));
+        indexEmpty = index;
+      });
+    }
+    if ((move == -2) || (move == 3)) {
+      int index = indexEmpty - 1;
+      setState(() {
+        tiles.insert(index, tiles.removeAt(indexEmpty));
+        indexEmpty = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Use the Todo to create the UI.
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Exercice 4"),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text("Déroulé de l'exercice 4"),
-      ),
+        appBar: AppBar(
+          title: Text("Exercice 7"),
+        ),
+        body: ListView(
+          children: [
+            Flexible(
+              child: SizedBox(
+                  height: 600,
+                  child: GridView.count(
+                    primary: false,
+                    padding: const EdgeInsets.all(0),
+                    crossAxisCount: size.toInt(),
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
+                    children: getTileWidgets(tiles),
+                  )),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.play_arrow),
+          onPressed: () {
+            setState(() {
+              tiles = shakeTiles(tiles);
+            });
+          },
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+            shape: CircularNotchedRectangle(),
+            notchMargin: 10,
+            child: Container(
+              height: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      setState(() {
+                        picture = "https://picsum.photos/512?v=" +
+                            random.nextInt(100).toString();
+                        tiles = initTiles();
+                      });
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.photo),
+                        Text('Change Pic'),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      setState(() {
+                        size = size - 1;
+                        tiles = initTiles();
+                        indexEmpty = size.toInt() * (size.toInt() - 1);
+                      });
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.minimize),
+                        Text('Size'),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      setState(() {
+                        size = size + 1;
+                        tiles = initTiles();
+                        indexEmpty = size.toInt() * (size.toInt() - 1);
+                      });
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.add),
+                        Text('Size'),
+                      ],
+                    ),
+                  ),
+                  MaterialButton(
+                    minWidth: 40,
+                    onPressed: () {
+                      tileMovement(-1 * (moves.removeAt(moves.length - 1)));
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.replay),
+                        Text('Back'),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )));
+  }
+
+  Widget newCreateTileWidgetFrom(
+    NewTile plateau,
+    int index,
+    int taille,
+  ) {
+    Widget tuile;
+    tuile = plateau.newCroppedImageTile(taille);
+    return InkWell(
+      child: tuile,
+      onTap: () {
+        moveTile(index);
+      },
     );
+  }
+
+  moveTile(int index) {
+    print("${index}");
+    if (indexEmpty == index + size.toInt()) {
+      tileMovement(1);
+      setState(() {
+        moves.add(1);
+      });
+    }
+    if (indexEmpty == index - size.toInt()) {
+      tileMovement(-1);
+      setState(() {
+        moves.add(-1);
+      });
+    }
+    if ((indexEmpty == index - 1) &&
+        (indexEmpty % size.toInt() != size.toInt() - 1)) {
+      tileMovement(2);
+      setState(() {
+        moves.add(2);
+      });
+    }
+    if ((indexEmpty == index + 1) && (indexEmpty % size.toInt() != 0)) {
+      tileMovement(-2);
+      setState(() {
+        moves.add(-2);
+      });
+    }
   }
 }
