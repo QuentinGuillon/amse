@@ -598,6 +598,7 @@ class _Exercice7 extends State<Exercice7> {
   }
 
   List<Widget> getTileWidgets(List<NewTile> inittiles) {
+    print(finish);
     List<Widget> tiles = [];
     EmptySpace emptySpace = EmptySpace(index: indexEmpty);
     for (var i = 0; i < math.pow(size.toInt(), 2); i++) {
@@ -615,14 +616,12 @@ class _Exercice7 extends State<Exercice7> {
   }
 
   List<NewTile> shakeTiles(List<NewTile> inittiles) {
-    tiles = [];
     int n = inittiles.length;
-    for (var i = 0; i < n; i++) {
-      setState(() {
-        tiles.add(inittiles.removeAt(random.nextInt(n - i)));
-      });
+    for (var i = 0; i < 1000; i++) {
+      moveTile(random.nextInt(n));
     }
-    return tiles;
+    moves = [];
+    return inittiles;
   }
 
   void tileMovement(int move) {
@@ -656,6 +655,14 @@ class _Exercice7 extends State<Exercice7> {
         indexEmpty = index;
       });
     }
+  }
+
+  bool verif(List<NewTile> inittiles) {
+    bool test = true;
+    for (var i = 0; i < inittiles.length; i++) {
+      test = test && (inittiles[i].index == i);
+    }
+    return test;
   }
 
   @override
@@ -705,6 +712,7 @@ class _Exercice7 extends State<Exercice7> {
                             random.nextInt(100).toString();
                         tiles = initTiles();
                       });
+                      finish = false;
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -722,6 +730,7 @@ class _Exercice7 extends State<Exercice7> {
                         tiles = initTiles();
                         indexEmpty = size.toInt() * (size.toInt() - 1);
                       });
+                      finish = false;
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -739,6 +748,7 @@ class _Exercice7 extends State<Exercice7> {
                         tiles = initTiles();
                         indexEmpty = size.toInt() * (size.toInt() - 1);
                       });
+                      finish = false;
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -776,7 +786,10 @@ class _Exercice7 extends State<Exercice7> {
     return InkWell(
       child: tuile,
       onTap: () {
-        moveTile(index);
+        if (!finish) {
+          moveTile(index);
+        }
+        finish = verif(tiles);
       },
     );
   }
