@@ -691,6 +691,7 @@ class _Exercice7 extends State<Exercice7> {
           child: Icon(Icons.play_arrow),
           onPressed: () {
             setState(() {
+              finish = false;
               tiles = shakeTiles(tiles);
             });
           },
